@@ -26,7 +26,13 @@ Offline AI es un asistente de IA completamente portable que arranca desde un USB
 
 ## Instalación en un USB nuevo
 
-**1. Formatea el USB** (cambia `sdX1` por el tuyo)
+**1. Formatea el USB**
+
+Primero identifica tu USB:
+```bash
+lsblk -o NAME,SIZE,LABEL,MOUNTPOINT | grep -v loop
+```
+Busca tu USB por el tamaño y anota el nombre (ej: `sdb1`). Luego formatea (cambia `sdX1` por el tuyo):
 ```bash
 sudo umount /dev/sdX1
 sudo mkfs.ext4 -L offline-ai /dev/sdX1
