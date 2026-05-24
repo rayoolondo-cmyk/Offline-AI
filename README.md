@@ -1,4 +1,4 @@
-# 🦞 Local AI - Asistente de IA portátil en USB
+# Local AI - Asistente de IA portátil en USB
 
 Lleva tu propio asistente de inteligencia artificial en un USB. Funciona en cualquier Ubuntu sin instalar nada en el sistema.
 
