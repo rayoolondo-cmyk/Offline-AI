@@ -1,10 +1,10 @@
-# Local AI - Asistente de IA portátil en USB
+# Offline AI - Asistente de IA portátil en USB
 
 Lleva tu propio asistente de inteligencia artificial en un USB. Funciona en cualquier Ubuntu sin instalar nada en el sistema.
 
 ## ¿Qué es?
 
-Local AI es un asistente de IA completamente portable que arranca desde un USB. Todo lo necesario va dentro del USB: el motor de IA (Ollama), los modelos, Python y el chat web.
+Offline AI es un asistente de IA completamente portable que arranca desde un USB. Todo lo necesario va dentro del USB: el motor de IA (Ollama), los modelos, Python y el chat web.
 
 ## Características
 
@@ -16,6 +16,7 @@ Local AI es un asistente de IA completamente portable que arranca desde un USB. 
 - 💬 **Historial** — guarda tus conversaciones entre sesiones
 - 🤖 **Multimodelo** — cambia entre modelos instalados desde el chat
 - 🔒 **Sin nube** — todo corre localmente, tus datos no salen del USB
+- ▶️ **Probar código HTML** — genera juegos y apps web y pruébalos al instante
 
 ## Requisitos
 
@@ -28,10 +29,10 @@ Local AI es un asistente de IA completamente portable que arranca desde un USB. 
 **1. Formatea el USB** (cambia `sdX1` por el tuyo)
 ```bash
 sudo umount /dev/sdX1
-sudo mkfs.ext4 -L local-ai /dev/sdX1
+sudo mkfs.ext4 -L offline-ai /dev/sdX1
 udisksctl mount -b /dev/sdX1
-sudo chown $USER:$USER /run/media/$USER/local-ai
-cd /run/media/$USER/local-ai
+sudo chown $USER:$USER /run/media/$USER/offline-ai
+cd /run/media/$USER/offline-ai
 ```
 
 **2. Descarga Ollama**
@@ -74,10 +75,39 @@ chmod +x start-offline.sh
 En cualquier Ubuntu, solo conecta el USB y ejecuta:
 
 ```bash
-bash /run/media/$USER/local-ai/start-offline.sh
+bash /run/media/$USER/offline-ai/start-offline.sh
 ```
 
 El chat se abre automáticamente en el navegador.
+
+## Ejemplos de uso
+
+**Generar y probar un juego HTML al instante:**
+> "Crea un juego de Snake en HTML5"
+
+Sparki genera el código y aparece un botón **▶ probar** junto al código para abrirlo en una pestaña nueva directamente.
+
+**Leer un documento:**
+> Sube un PDF y pregunta "resume este documento"
+
+**Buscar información actual:**
+> Activa 🌐 y pregunta "últimas noticias sobre IA"
+
+## Modelos recomendados
+
+| Modelo | Tamaño | Uso |
+|--------|--------|-----|
+| `llama3.2:3b` | 2 GB | Por defecto, texto |
+| `qwen3.5:2b` | 2.7 GB | Texto e imágenes |
+| `llava:7b` | 4 GB | Mejor comprensión de imágenes |
+| `gemma3:4b` | 3.3 GB | Buena calidad, texto |
+
+> ⚠️ Para ver y analizar imágenes necesitas un modelo multimodal como `qwen3.5:2b` o `llava`. El modelo por defecto solo lee el nombre del archivo.
+
+Para instalar un modelo adicional con el USB montado:
+```bash
+OLLAMA_MODELS=/run/media/$USER/offline-ai/models ollama pull qwen3.5:2b
+```
 
 ## Stack
 
