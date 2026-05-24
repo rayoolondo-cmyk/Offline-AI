@@ -21,7 +21,7 @@ Local AI es un asistente de IA completamente portable que arranca desde un USB. 
 
 - Ubuntu 20.04 o superior
 - USB de 8GB o más (ext4)
-- No se necesita instalar nada en el sistema
+- `zstd` instalado: `sudo apt install zstd -y`
 
 ## Instalación en un USB nuevo
 
@@ -51,6 +51,8 @@ tar xzf /tmp/python.tar.gz && mv python python-portable && rm /tmp/python.tar.gz
 ```bash
 python-portable/bin/pip3 install PyPDF2 python-docx openpyxl python-pptx -q
 ```
+
+> `PyPDF2` — leer PDFs | `python-docx` — Word | `openpyxl` — Excel | `python-pptx` — PowerPoint
 
 **5. Descarga el modelo**
 ```bash
