@@ -1,4 +1,4 @@
-# Offline AI - Asistente de IA portátil en USB
+# 🦞 Offline AI - Asistente de IA portátil en USB
 
 Lleva tu propio asistente de inteligencia artificial en un USB. Funciona en cualquier Ubuntu sin instalar nada en el sistema.
 
@@ -12,11 +12,14 @@ Offline AI es un asistente de IA completamente portable que arranca desde un USB
 - 🌐 **Chat web local** — interfaz en el navegador sin internet
 - 🔍 **Búsqueda web** — cuando hay wifi, busca información actual
 - 📎 **Lee archivos** — PDF, Word, Excel, PowerPoint, TXT, código...
-- 🖼 **Sube imágenes** — adjunta imágenes a tus mensajes
-- 💬 **Historial** — guarda tus conversaciones entre sesiones
-- 🤖 **Multimodelo** — cambia entre modelos instalados desde el chat
-- 🔒 **Sin nube** — todo corre localmente, tus datos no salen del USB
+- 🖼 **Sube imágenes** — adjunta imágenes a tus mensajes con compresión automática
+- 💬 **Historial** — guarda tus conversaciones entre sesiones (imágenes incluidas)
+- 🤖 **Multimodelo** — cambia, descarga y elimina modelos desde el chat
+- ☁️ **Modelos cloud** — usa modelos de Ollama Cloud con tu cuenta (requiere suscripción)
+- 🔗 **Vincular cuenta** — conecta tu cuenta de ollama.com desde el chat
+- 🔒 **Credenciales portables** — tu sesión de Ollama se guarda en el USB
 - ▶️ **Probar código HTML** — genera juegos y apps web y pruébalos al instante
+- ❌ **Cancelar respuesta** — cancela la generación en cualquier momento
 
 ## Requisitos
 
@@ -32,6 +35,7 @@ Primero identifica tu USB:
 ```bash
 lsblk -o NAME,SIZE,LABEL,MOUNTPOINT | grep -v loop
 ```
+
 Busca tu USB por el tamaño y anota el nombre (ej: `sdb1`). Luego formatea (cambia `sdX1` por el tuyo):
 ```bash
 sudo umount /dev/sdX1
@@ -63,9 +67,9 @@ python-portable/bin/pip3 install PyPDF2 python-docx openpyxl python-pptx -q
 
 **5. Descarga el modelo**
 ```bash
-OLLAMA_MODELS=$PWD/models ollama/bin/ollama serve &
+OLLAMA_HOME=$PWD/ollama OLLAMA_MODELS=$PWD/models ollama/bin/ollama serve &
 sleep 3
-OLLAMA_MODELS=$PWD/models ollama/bin/ollama pull llama3.2:3b
+OLLAMA_HOME=$PWD/ollama OLLAMA_MODELS=$PWD/models ollama/bin/ollama pull llama3.2:3b
 ```
 
 **6. Copia los archivos al USB**
@@ -93,11 +97,21 @@ El chat se abre automáticamente en el navegador.
 
 Sparki genera el código y aparece un botón **▶ probar** junto al código para abrirlo en una pestaña nueva directamente.
 
+**Analizar una imagen:**
+> Sube una foto y pregunta "¿qué ves en esta imagen?"
+
+Las imágenes se comprimen automáticamente y se guardan en el historial entre sesiones.
+
 **Leer un documento:**
-> Sube un PDF y pregunta "resume este documento"
+> Sube un PDF, Word, Excel o PowerPoint y pregunta "resume este documento"
 
 **Buscar información actual:**
 > Activa 🌐 y pregunta "últimas noticias sobre IA"
+
+**Usar modelos cloud:**
+> Pulsa **+** → escribe `glm-5:cloud` → **Usar / Descargar**
+
+Necesitas vincular tu cuenta de ollama.com con el botón **🔗 Cuenta**. Los modelos cloud requieren suscripción.
 
 ## Modelos recomendados
 
@@ -105,18 +119,27 @@ Sparki genera el código y aparece un botón **▶ probar** junto al código par
 |--------|--------|-----|
 | `llama3.2:3b` | 2 GB | Por defecto, texto |
 | `qwen3.5:2b` | 2.7 GB | Texto e imágenes |
-| `llava:7b` | 4 GB | Mejor comprensión de imágenes |
-| `gemma3:4b` | 3.3 GB | Buena calidad, texto |
+| `gemma4:e4b` | 4 GB | Texto e imágenes, alta calidad |
+| `llava:7b` | 4 GB | Especializado en imágenes |
 
-> ⚠️ Para ver y analizar imágenes necesitas un modelo multimodal como `qwen3.5:2b` o `llava`. El modelo por defecto solo lee el nombre del archivo.
+> ⚠️ Para ver y analizar imágenes necesitas un modelo multimodal como `qwen3.5:2b`, `gemma4` o `llava`.
 
-Para instalar un modelo adicional con el USB montado:
+Para instalar un modelo desde el chat, pulsa **+** y escribe el nombre. También puedes hacerlo desde terminal:
 ```bash
-OLLAMA_MODELS=/run/media/$USER/offline-ai/models ollama pull qwen3.5:2b
+OLLAMA_HOME=/run/media/$USER/offline-ai/ollama OLLAMA_MODELS=/run/media/$USER/offline-ai/models /run/media/$USER/offline-ai/ollama/bin/ollama pull qwen3.5:2b
 ```
+
+## Vincular cuenta Ollama (modelos cloud)
+
+Para usar modelos cloud, vincula tu cuenta desde el chat (**+ → 🔗 Cuenta**) o desde terminal:
+```bash
+OLLAMA_HOME=/run/media/$USER/offline-ai/ollama /run/media/$USER/offline-ai/ollama/bin/ollama signin
+```
+
+Las credenciales se guardan en el USB y funcionan en cualquier ordenador.
 
 ## Stack
 
-- [Ollama](https://ollama.com) — motor de IA local
-- Python 3.12 portable — servidor web y proxy de búsqueda
+- [Ollama](https://ollama.com) — motor de IA local y cloud
+- Python 3.12 portable — servidor web, proxy de búsqueda y lectura de archivos
 - HTML/JS puro — interfaz del chat sin dependencias externas
