@@ -1,4 +1,4 @@
-# 🦞 Offline AI - Asistente de IA portátil en USB
+# Offline AI - Asistente de IA portátil en USB
 
 Lleva tu propio asistente de inteligencia artificial en un USB. Funciona en cualquier Ubuntu o Windows sin instalar nada en el sistema.
 
@@ -109,7 +109,25 @@ Descarga el zip de CPU desde [github.com/ggml-org/llama.cpp/releases](https://gi
 
 Descarga `python-3.12.x-embed-amd64.zip` desde [python.org/downloads](https://www.python.org/downloads/windows/) y extrae el contenido en la carpeta `python\` del USB.
 
-### 4. Descarga un modelo GGUF
+### 4. Instala las librerías Python
+
+Edita el archivo `python\python312._pth` y asegúrate de que contiene estas líneas:
+```
+python312.zip
+.
+import site
+Lib\site-packages
+```
+
+Luego instala las librerías desde PowerShell:
+```powershell
+.\python\python.exe .\python\get-pip.py
+.\python\python.exe -m pip install PyPDF2 python-docx openpyxl python-pptx --target .\python\Lib\site-packages\
+```
+
+> `PyPDF2` — leer PDFs | `python-docx` — Word | `openpyxl` — Excel | `python-pptx` — PowerPoint
+
+### 5. Descarga un modelo GGUF
 
 Descarga cualquier modelo en formato `.gguf` y colócalo en la carpeta `models\` del USB. Recomendado para empezar:
 
