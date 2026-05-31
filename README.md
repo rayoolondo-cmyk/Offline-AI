@@ -1,4 +1,4 @@
-# 🦞 Offline AI - Asistente de IA portátil en USB
+# Offline AI - Asistente de IA portátil en USB
 
 Lleva tu propio asistente de inteligencia artificial en un USB. Funciona en cualquier Ubuntu o Windows sin instalar nada en el sistema.
 
@@ -16,6 +16,7 @@ Offline AI es un asistente de IA completamente portable que arranca desde un USB
 - 🖼 **Sube imágenes** — adjunta imágenes con compresión automática
 - 💬 **Historial** — guarda tus conversaciones entre sesiones (imágenes incluidas)
 - 🤖 **Cambio de modelo** — cambia entre modelos GGUF desde el chat con el botón **+**
+- 🧠 **Sistema de expertos** — activa un experto con `/nombre` para respuestas especializadas
 - ▶️ **Probar código HTML** — genera juegos y apps web y pruébalos al instante
 - ❌ **Cancelar respuesta** — cancela la generación en cualquier momento
 
@@ -71,12 +72,6 @@ mkdir -p models
 curl -L "https://huggingface.co/bartowski/Qwen2.5-1.5B-Instruct-GGUF/resolve/main/Qwen2.5-1.5B-Instruct-Q4_K_M.gguf" -o models/qwen2.5-1.5b.gguf
 ```
 
-Para modelos con visión necesitas dos archivos — el modelo y su proyector:
-```bash
-| `gemma-3-1b-it-Q4_K_M.gguf` | 1.1 GB | Texto e imágenes (proyector incluido) |
-| `gemma-3-4b-it-Q4_K_M.gguf` | 3.3 GB | Mejor calidad con imágenes (proyector incluido) |
-```
-
 ### 6. Copia los archivos al USB
 
 Descarga `chat.html`, `start-offline.sh` y `search-proxy.py` de este repositorio y cópialos al USB.
@@ -128,8 +123,6 @@ Luego instala las librerías desde PowerShell:
 .\python\python.exe -m pip install PyPDF2 python-docx openpyxl python-pptx --target .\python\Lib\site-packages\
 ```
 
-> `PyPDF2` — leer PDFs | `python-docx` — Word | `openpyxl` — Excel | `python-pptx` — PowerPoint
-
 ### 5. Descarga un modelo GGUF
 
 Descarga cualquier modelo en formato `.gguf` y colócalo en la carpeta `models\` del USB. Recomendado para empezar:
@@ -169,6 +162,11 @@ Las imágenes se comprimen automáticamente y se guardan en el historial entre s
 
 El servidor se reinicia automáticamente con el nuevo modelo.
 
+**Activar un experto:**
+> Escribe `/kali` para activar el experto en Kali Linux
+
+Los archivos de expertos son `.json` o `.jsonl` en la carpeta `experts/` del USB. Escribe `/nombre` para activar cualquier experto y haz clic en el badge 🧠 para desactivarlo.
+
 ---
 
 ## Modelos recomendados
@@ -178,12 +176,24 @@ El servidor se reinicia automáticamente con el nuevo modelo.
 | `Qwen2.5-0.5B-Q4_K_M.gguf` | 400 MB | Muy ligero, texto |
 | `Qwen2.5-1.5B-Q4_K_M.gguf` | 1 GB | Buena calidad, texto |
 | `Qwen2.5-3B-Q4_K_M.gguf` | 2 GB | Alta calidad, texto |
-| `gemma-3-1b-it-Q4_K_M.gguf` + `mmproj-*.gguf` | 1.1 GB | Texto e imágenes |
-| `gemma-3-4b-it-Q4_K_M.gguf` + `mmproj-*.gguf` | 3.3 GB | Mejor calidad con imágenes |
+| `gemma-3-1b-it-Q4_K_M.gguf` | 1.1 GB | Texto e imágenes |
+| `gemma-3-4b-it-Q4_K_M.gguf` | 3.3 GB | Mejor calidad con imágenes |
 
-> ⚠️ Para modelos con visión coloca tanto el archivo del modelo como el archivo `mmproj-*.gguf` en la carpeta `models/`.
+> Los modelos gemma-3 incluyen soporte de visión sin necesidad de archivos adicionales.
 
 Los modelos GGUF se pueden encontrar en [huggingface.co/bartowski](https://huggingface.co/bartowski) y [huggingface.co/ggml-org](https://huggingface.co/ggml-org).
+
+---
+
+## Sistema de expertos
+
+Puedes añadir tus propios expertos colocando archivos `.jsonl` en la carpeta `experts/` del USB. El formato es:
+
+```json
+{"messages": [{"role": "system", "content": "Eres un experto en..."}]}
+```
+
+Activa un experto escribiendo `/nombre` en el chat. El badge 🧠 indica el experto activo — haz clic para desactivarlo.
 
 ---
 
