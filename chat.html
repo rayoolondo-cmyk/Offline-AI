@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Sparki - Chat Local</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: sans-serif; background: #1a1a2e; color: #eee; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+  #header { background: #16213e; padding: 0.6rem 1rem; display: flex; align-items: center; gap: 0.6rem; border-bottom: 1px solid #0f3460; flex-shrink: 0; }
+  #header-title { font-size: 1rem; font-weight: bold; color: #e94560; flex: 1; }
+  #wifi-badge { font-size: 0.72rem; padding: 2px 8px; border-radius: 10px; }
+  .online { background: #1a6b3c; color: #7effc0; }
+  .offline { background: #6b1a1a; color: #ffaaaa; }
+  #model-select { background: #0f3460; color: #ccc; border: 1px solid #333; border-radius: 6px; padding: 3px 6px; font-size: 0.78rem; cursor: pointer; }
+  #clear-btn { background: none; border: 1px solid #333; color: #888; border-radius: 6px; padding: 3px 8px; font-size: 0.78rem; cursor: pointer; }
+  #add-model-btn { background: #0f3460; border: 1px solid #333; color: #7effc0; border-radius: 6px; padding: 3px 8px; font-size: 0.85rem; cursor: pointer; }
+  #add-model-btn:hover { background: #1a6b3c; }
+
+  #model-download-bar.visible { display: flex; }
+
+
+  #clear-btn:hover { border-color: #e94560; color: #e94560; }
+  #body { display: flex; flex: 1; overflow: hidden; }
+  #sidebar { width: 200px; background: #12122a; border-right: 1px solid #0f3460; display: flex; flex-direction: column; flex-shrink: 0; }
+  #sidebar-header { padding: 0.6rem 0.75rem; font-size: 0.75rem; color: #888; border-bottom: 1px solid #0f3460; display: flex; justify-content: space-between; align-items: center; }
+  #new-chat-btn { background: #e94560; color: white; border: none; border-radius: 5px; padding: 2px 8px; font-size: 0.72rem; cursor: pointer; }
+  #history-list { flex: 1; overflow-y: auto; padding: 0.4rem; display: flex; flex-direction: column; gap: 4px; }
+  .history-item { padding: 0.4rem 0.6rem; border-radius: 6px; font-size: 0.78rem; color: #bbb; cursor: pointer; border: 1px solid transparent; display: flex; align-items: center; gap: 4px; }
+  .history-item:hover { background: #1a1a3e; border-color: #0f3460; }
+  .history-item.active { background: #0f3460; color: #fff; border-color: #e94560; }
+  .history-item span { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .del-btn { background: none; border: none; color: #555; font-size: 0.8rem; cursor: pointer; padding: 0 2px; }
+  .del-btn:hover { color: #e94560; }
+  #main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  #messages { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
+  .msg-wrap { display: flex; flex-direction: column; }
+  .msg-wrap.user { align-items: flex-end; }
+  .msg-wrap.bot { align-items: flex-start; }
+  .msg { max-width: 80%; padding: 0.75rem 1rem; border-radius: 12px; line-height: 1.6; word-break: break-word; }
+  .user .msg { background: #0f3460; }
+  .bot .msg { background: #16213e; border-left: 3px solid #e94560; }
+  .thinking { opacity: 0.6; font-style: italic; }
+  .msg p { margin-bottom: 0.5rem; }
+  .msg p:last-child { margin-bottom: 0; }
+  .msg strong { color: #fff; font-weight: 600; }
+  .msg ul, .msg ol { margin: 0.4rem 0 0.4rem 1.2rem; }
+  .msg li { margin-bottom: 0.2rem; }
+  .msg code { background: #0a0a1a; color: #e94560; padding: 1px 5px; border-radius: 4px; font-family: monospace; font-size: 0.88em; }
+  .msg pre { background: #0a0a1a; border-radius: 8px; padding: 0.75rem; margin: 0.5rem 0; overflow-x: auto; position: relative; }
+  .msg pre code { background: none; color: #7effc0; padding: 0; font-size: 0.85em; }
+  .code-btn { position: absolute; top: 6px; background: #1a1a3e; border: 1px solid #333; color: #888; border-radius: 4px; padding: 2px 6px; font-size: 0.7rem; cursor: pointer; }
+  .btn-copy { right: 6px; }
+  .btn-try { right: 72px; color: #7effc0; }
+  .msg-actions { display: flex; gap: 6px; margin-top: 4px; opacity: 0; transition: opacity 0.15s; }
+  .msg-wrap:hover .msg-actions { opacity: 1; }
+  .msg-action-btn { background: none; border: 1px solid #333; color: #888; border-radius: 5px; padding: 2px 8px; font-size: 0.72rem; cursor: pointer; }
+  .file-bubble { background: #1a2a4a; border: 1px solid #0f3460; border-radius: 8px; padding: 0.5rem 0.75rem; margin-bottom: 0.3rem; font-size: 0.8rem; color: #aaa; display: flex; align-items: center; gap: 0.5rem; max-width: 80%; align-self: flex-end; }
+  .file-bubble img { max-width: 200px; max-height: 150px; border-radius: 6px; display: block; }
+  #status { font-size: 0.75rem; color: #666; text-align: center; padding: 0.15rem; background: #16213e; flex-shrink: 0; }
+  #file-bar { display: none; flex-wrap: wrap; align-items: center; gap: 0.4rem; padding: 0.3rem 1rem; background: #0a0a2a; border-top: 1px solid #0f3460; font-size: 0.78rem; flex-shrink: 0; }
+  #file-bar.visible { display: flex; }
+  .file-tag { background: #0f3460; border-radius: 4px; padding: 2px 6px; display: inline-flex; align-items: center; gap: 4px; }
+  .file-tag-x { background: none; border: none; color: #e94560; cursor: pointer; font-size: 0.9rem; padding: 0; line-height: 1; }
+  #input-area { display: flex; align-items: center; padding: 0.6rem 1rem; background: #16213e; border-top: 1px solid #0f3460; flex-shrink: 0; gap: 0; }
+  #attach-btn, #web-btn { width: 38px; height: 38px; background: #0f3460; border: none; cursor: pointer; color: #aaa; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  #attach-btn { border-radius: 8px 0 0 8px; }
+  #web-btn { border-left: 1px solid #16213e; border-right: 1px solid #16213e; }
+  #attach-btn:hover, #web-btn:hover { background: #1a4a80; color: #fff; }
+  #attach-btn.active { background: #e9a020; color: #fff; }
+  #web-btn.active { background: #1a6b3c; color: #7effc0; }
+  #file-input { display: none; }
+  #input { flex: 1; padding: 0.6rem 0.75rem; border: none; border-top: 1px solid #0f3460; border-bottom: 1px solid #0f3460; background: #0f3460; color: #eee; font-size: 0.95rem; outline: none; border-radius: 0; }
+  #send { padding: 0 1.1rem; height: 38px; background: #e94560; color: white; border: none; border-radius: 0 8px 8px 0; cursor: pointer; font-size: 0.9rem; }
+  #send:hover { background: #c73652; }
+  #send:disabled { background: #555; cursor: not-allowed; }
+  #model-bar { display: none; align-items: center; gap: 0.5rem; padding: 0.3rem 1rem; background: #0a0a2a; border-bottom: 1px solid #0f3460; font-size: 0.78rem; flex-shrink: 0; }
+  #model-bar.visible { display: flex; }
+  #model-bar-select { background: #0f3460; color: #eee; border: 1px solid #333; border-radius: 4px; padding: 3px 8px; flex: 1; font-size: 0.78rem; }
+  #expert-badge { display: none; background: #1a3a1a; border: 1px solid #3a7a3a; color: #7effc0; border-radius: 6px; padding: 2px 8px; font-size: 0.72rem; cursor: pointer; }
+  #expert-badge.active { display: inline-block; }
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+</style>
+</head>
+<body>
+<div id="header">
+  <span id="header-title">Sparki</span>
+  <select id="model-select"><option value="">Cargando...</option></select>
+  <span id="wifi-badge" class="offline">sin wifi</span>
+  <span id="expert-badge" title="Click para desactivar experto">🧠 <span id="expert-name"></span></span>
+  <button id="add-model-btn" title="Añadir modelo">+</button>
+  <button id="clear-btn">🗑 Limpiar</button>
+</div>
+
+<div id="model-bar">
+  <span style="color:#aaa;flex-shrink:0;">Modelo:</span>
+  <select id="model-bar-select"></select>
+  <button onclick="useModel()" style="background:#e94560;border:none;color:white;border-radius:4px;padding:3px 10px;cursor:pointer;font-size:0.78rem;">Usar</button>
+  <button onclick="document.getElementById('model-bar').classList.remove('visible')" style="background:none;border:1px solid #333;color:#888;border-radius:4px;padding:3px 8px;cursor:pointer;font-size:0.78rem;">✕</button>
+</div>
+<div id="body">
+  <div id="sidebar">
+    <div id="sidebar-header">
+      <span>Conversaciones</span>
+      <button id="new-chat-btn">+ Nueva</button>
+    </div>
+    <div id="history-list"></div>
+  </div>
+  <div id="main">
+    <div id="messages"></div>
+    <div id="status">Conectando...</div>
+    <div id="file-bar"></div>
+    <div id="input-area">
+      <button id="attach-btn" title="Subir archivos">📎</button>
+      <input id="file-input" type="file" multiple accept=".txt,.md,.json,.csv,.html,.py,.js,.sh,.log,.pdf,.docx,.xlsx,.pptx,.png,.jpg,.jpeg,.webp" />
+      <input id="input" type="text" placeholder="Escribe tu mensaje..." autofocus />
+      <button id="web-btn" title="Busqueda web">🌐</button>
+      <button id="send">Enviar</button>
+    </div>
+  </div>
+</div>
+<script>
+var messagesEl=document.getElementById('messages');
+var inputEl=document.getElementById('input');
+var statusEl=document.getElementById('status');
+var wifiBadge=document.getElementById('wifi-badge');
+var webBtn=document.getElementById('web-btn');
+var attachBtn=document.getElementById('attach-btn');
+var modelSelect=document.getElementById('model-select');
+var historyList=document.getElementById('history-list');
+var sendBtn=document.getElementById('send');
+var fileBar=document.getElementById('file-bar');
+
+var chatHistory=[];
+var fileAttaches=[];
+var fileContexts=[];
+var webEnabled=false;
+var isOnline=false;
+var sending=false;
+var currentSessionId=null;
+var allSessions=[];
+
+try { allSessions=JSON.parse(localStorage.getItem('sparki-sessions')||'[]'); } catch(e){ allSessions=[]; }
+
+function checkWifi(){
+  fetch('https://dns.google/resolve?name=google.com',{mode:'no-cors',cache:'no-store'})
+    .then(function(){ isOnline=true; wifiBadge.textContent='wifi'; wifiBadge.className='online'; })
+    .catch(function(){ isOnline=false; wifiBadge.textContent='sin wifi'; wifiBadge.className='offline'; if(webEnabled){webEnabled=false;webBtn.style.background='';} });
+}
+setInterval(checkWifi,15000);
+checkWifi();
+
+webBtn.onclick=function(){
+  if(!isOnline){statusEl.textContent='Sin wifi';return;}
+  webEnabled=!webEnabled;
+  webBtn.style.background=webEnabled?'#1a6b3c':'';
+  webBtn.style.color=webEnabled?'#7effc0':'';
+};
+
+function renderFileBar(){
+  fileBar.innerHTML='';
+  if(!fileAttaches.length){fileBar.classList.remove('visible');return;}
+  fileBar.classList.add('visible');
+  fileAttaches.forEach(function(f,i){
+    var tag=document.createElement('span');tag.className='file-tag';
+    var nm=document.createElement('span');nm.textContent=(f.type==='image'?'img: ':'doc: ')+f.name;
+    var x=document.createElement('button');x.className='file-tag-x';x.textContent='x';
+    x.onclick=function(){fileAttaches.splice(i,1);fileContexts=fileContexts.filter(function(c){return c.name!==f.name;});if(!fileAttaches.length)attachBtn.classList.remove('active');renderFileBar();};
+    tag.appendChild(nm);tag.appendChild(x);fileBar.appendChild(tag);
+  });
+}
+
+attachBtn.onclick=function(){document.getElementById('file-input').click();};
+document.getElementById('file-input').onchange=async function(e){
+  var files=Array.from(e.target.files);
+  if(!files.length)return;
+  statusEl.textContent='Leyendo '+files.length+' archivo(s)...';
+  for(var i=0;i<files.length;i++){
+    var file=files[i];
+    var ext=file.name.split('.').pop().toLowerCase();
+    var isImage=['png','jpg','jpeg','webp'].indexOf(ext)>=0;
+    var isBinary=['pdf','docx','xlsx','pptx'].indexOf(ext)>=0;
+    if(isImage){
+      await new Promise(function(res){
+        var reader=new FileReader();
+        reader.onload=function(ev){
+          var img=new Image();
+          img.onload=function(){
+            var canvas=document.createElement('canvas');
+            var max=512;
+            var w=img.width,h=img.height;
+            if(w>max||h>max){if(w>h){h=Math.round(h*max/w);w=max;}else{w=Math.round(w*max/h);h=max;}}
+            canvas.width=w;canvas.height=h;
+            canvas.getContext('2d').drawImage(img,0,0,w,h);
+            var compressed=canvas.toDataURL('image/jpeg',0.6);
+            fileAttaches.push({type:'image',name:file.name,dataUrl:compressed,ext:ext});
+            renderFileBar();
+            res();
+          };
+          img.src=ev.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    } else if(isBinary){
+      try{
+        var buf=await file.arrayBuffer();
+        var r=await fetch('http://localhost:8081/pdf',{method:'POST',headers:{'Content-Type':'application/octet-stream','X-File-Type':ext},body:buf});
+        var data=await r.json();
+        if(data.error){statusEl.textContent='Error: '+data.error;continue;}
+        var info=data.pages?data.pages+' pags':data.slides?data.slides+' diaps':data.sheets?data.sheets+' hojas':'ok';
+        fileAttaches.push({type:'doc',name:file.name,ext:ext,info:info});
+        fileContexts.push({name:file.name,text:data.text});
+        renderFileBar();
+      }catch(err){statusEl.textContent='Error: '+err.message;}
+    } else {
+      var text=await file.text();
+      fileAttaches.push({type:'text',name:file.name,ext:ext,chars:text.length});
+      fileContexts.push({name:file.name,text:text.slice(0,4000)});
+      renderFileBar();
+    }
+  }
+  document.getElementById('file-input').value='';
+  attachBtn.classList.add('active');
+  renderFileBar();
+  statusEl.textContent=fileAttaches.length+' archivo(s) cargado(s)';
+};
+
+async function webSearch(query){
+  try{
+    var res=await fetch('http://localhost:8081/search?q='+encodeURIComponent(query));
+    var data=await res.json();
+    if(!data.results||!data.results.length)return null;
+    return data.results.map(function(r){return (r.title?r.title+': ':'')+r.snippet;}).join('\n');
+  }catch(e){return null;}
+}
+
+function renderMarkdown(text){
+  var h=text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/```(\w*)\n?([\s\S]*?)```/g,function(_,l,code){
+      var isHtml=['html','html5','htm'].indexOf(l.toLowerCase())>=0||code.trim().toLowerCase().indexOf('<!doctype')===0||code.trim().toLowerCase().indexOf('<html')===0;
+      var tryBtn=isHtml?'<button class="code-btn btn-try" onclick="tryCode(this)">probar</button>':'';
+      return '<pre>'+tryBtn+'<button class="code-btn btn-copy" onclick="copyCode(this)">copiar</button><code>'+code.trim()+'</code></pre>';
+    })
+    .replace(/`([^`]+)`/g,'<code>$1</code>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/^[\*\-] (.+)$/gm,'<li>$1</li>')
+    .replace(/^(\d+)\. (.+)$/gm,'<li>$2</li>')
+    .replace(/(<li>[\s\S]*?<\/li>)/g,'<ul>$1</ul>')
+    .replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>');
+  return '<p>'+h+'</p>';
+}
+
+function copyCode(btn){
+  navigator.clipboard.writeText(btn.parentElement.querySelector('code').textContent)
+    .then(function(){btn.textContent='ok';setTimeout(function(){btn.textContent='copiar';},1500);});
+}
+function tryCode(btn){
+  var code=btn.parentElement.querySelector('code').textContent;
+  var w=window.open('','_blank');w.document.open();w.document.write(code);w.document.close();
+}
+
+function addFileBubble(f){
+  var wrap=document.createElement('div');wrap.className='msg-wrap user';
+  var bubble=document.createElement('div');bubble.className='file-bubble';
+  if(f.type==='image'){var img=document.createElement('img');img.src=f.dataUrl;img.alt=f.name;bubble.appendChild(img);}
+  else{bubble.textContent='doc: '+f.name+(f.info?' ('+f.info+')':f.chars?' ('+f.chars+' chars)':'');}
+  wrap.appendChild(bubble);messagesEl.appendChild(wrap);messagesEl.scrollTop=messagesEl.scrollHeight;
+}
+
+function addMsg(text,type,isMarkdown){
+  var wrap=document.createElement('div');wrap.className='msg-wrap '+type;
+  var div=document.createElement('div');div.className='msg';
+  if(isMarkdown)div.innerHTML=renderMarkdown(text);else div.textContent=text;
+  wrap.appendChild(div);
+  if(type==='bot'){
+    var actions=document.createElement('div');actions.className='msg-actions';
+    var btn=document.createElement('button');btn.className='msg-action-btn';btn.textContent='Copiar';
+    btn.onclick=function(){navigator.clipboard.writeText(text).then(function(){btn.textContent='OK';setTimeout(function(){btn.textContent='Copiar';},1500);});};
+    actions.appendChild(btn);wrap.appendChild(actions);
+  }
+  messagesEl.appendChild(wrap);messagesEl.scrollTop=messagesEl.scrollHeight;
+  return{wrap:wrap,div:div};
+}
+
+function saveSession(){
+  if(!currentSessionId||chatHistory.length===0)return;
+  var idx=-1;
+  for(var i=0;i<allSessions.length;i++){if(allSessions[i].id===currentSessionId){idx=i;break;}}
+  var session={id:currentSessionId,title:chatHistory[0].content.slice(0,35),history:chatHistory,ts:Date.now()};
+  if(idx>=0)allSessions[idx]=session;else allSessions.unshift(session);
+  if(allSessions.length>30)allSessions=allSessions.slice(0,30);
+  try{localStorage.setItem('sparki-sessions',JSON.stringify(allSessions));}catch(e){}
+  renderHistory();
+}
+
+function deleteSession(id,e){
+  e.stopPropagation();
+  allSessions=allSessions.filter(function(s){return s.id!==id;});
+  try{localStorage.setItem('sparki-sessions',JSON.stringify(allSessions));}catch(e){}
+  if(currentSessionId===id)newSession();else renderHistory();
+}
+
+function renderHistory(){
+  historyList.innerHTML='';
+  allSessions.forEach(function(s){
+    var item=document.createElement('div');item.className='history-item'+(s.id===currentSessionId?' active':'');
+    var txt=document.createElement('span');txt.textContent=s.title||'Conversacion';
+    var del=document.createElement('button');del.className='del-btn';del.textContent='x';
+    del.onclick=function(e){deleteSession(s.id,e);};
+    item.appendChild(txt);item.appendChild(del);
+    (function(sid){item.onclick=function(){loadSession(sid);};})(s.id);
+    historyList.appendChild(item);
+  });
+}
+
+function loadSession(id){
+  var s=null;
+  for(var i=0;i<allSessions.length;i++){if(allSessions[i].id===id){s=allSessions[i];break;}}
+  if(!s)return;
+  currentSessionId=id;chatHistory=s.history.slice();
+  messagesEl.innerHTML='';
+  chatHistory.forEach(function(m){
+    if(m.images&&m.images.length>0){
+      m.images.forEach(function(img){
+        var wrap=document.createElement('div');wrap.className='msg-wrap user';
+        var bubble=document.createElement('div');bubble.className='file-bubble';
+        var imgEl=document.createElement('img');imgEl.src='data:image/jpeg;base64,'+img;imgEl.style.cssText='max-width:200px;max-height:150px;border-radius:6px;';
+        bubble.appendChild(imgEl);wrap.appendChild(bubble);messagesEl.appendChild(wrap);
+      });
+    }
+    if(m.docs&&m.docs.length>0){
+      m.docs.forEach(function(d){
+        var wrap=document.createElement('div');wrap.className='msg-wrap user';
+        var bubble=document.createElement('div');bubble.className='file-bubble';
+        bubble.textContent='📄 '+d;
+        wrap.appendChild(bubble);messagesEl.appendChild(wrap);
+      });
+    }
+    addMsg(m.content,m.role==='user'?'user':'bot',m.role==='assistant');
+  });
+  renderHistory();
+}
+
+function newSession(){
+  currentSessionId=Date.now().toString();
+  chatHistory=[];
+  messagesEl.innerHTML='';
+  fileAttaches=[];fileContexts=[];
+  renderFileBar();
+  attachBtn.classList.remove('active');
+  addMsg('Hola! Soy Sparki. Puedes chatear, subir archivos o activar busqueda web.','bot',false);
+  renderHistory();
+}
+
+document.getElementById('new-chat-btn').onclick=newSession;
+document.getElementById('clear-btn').onclick=function(){
+  messagesEl.innerHTML='';chatHistory=[];currentSessionId=Date.now().toString();
+  addMsg('Chat limpiado.','bot',false);
+};
+
+// ── AÑADIR MODELO ──
+function useModel(){
+  var sel=document.getElementById('model-bar-select');
+  var name=sel.value;
+  if(!name)return;
+  statusEl.textContent='Cambiando modelo...';
+  fetch('http://localhost:8081/switch?model='+encodeURIComponent(name))
+    .then(r=>r.json())
+    .then(function(){
+      document.getElementById('model-bar').classList.remove('visible');
+      statusEl.textContent='Cargando '+name+'...';
+      // Esperar a que arranque y actualizar selector
+      setTimeout(function(){
+        fetch('http://localhost:11434/v1/models').then(r=>r.json()).then(function(data){
+          if(data.data&&data.data.length){
+            modelSelect.innerHTML='';
+            data.data.forEach(function(m){
+              var o=document.createElement('option');o.value=m.id;o.textContent=m.id;
+              modelSelect.appendChild(o);
+            });
+            statusEl.textContent='Usando: '+data.data[0].id;
+          }
+        });
+      }, 8000);
+    })
+    .catch(function(){statusEl.textContent='Error al cambiar modelo';});
+}
+document.getElementById('add-model-btn').onclick=function(){
+  var bar=document.getElementById('model-bar');
+  bar.classList.toggle('visible');
+  if(bar.classList.contains('visible')){
+    fetch('http://localhost:8081/models').then(r=>r.json()).then(function(data){
+      var sel=document.getElementById('model-bar-select');
+      sel.innerHTML='';
+      if(data.models&&data.models.length){
+        data.models.forEach(function(m){
+          var o=document.createElement('option');o.value=m;o.textContent=m;sel.appendChild(o);
+        });
+      }
+    }).catch(function(){});
+  }
+};
+var activeExpert = null; // {name, system}
+
+// Detectar /experto al enviar
+function checkExpertCommand(text) {
+  if (!text.startsWith('/')) return false;
+  var name = text.slice(1).trim();
+  if (!name) return false;
+  fetch('http://localhost:8081/expert?name=' + encodeURIComponent(name))
+    .then(r => r.json())
+    .then(function(data) {
+      if (data.system) {
+        activeExpert = {name: data.name, system: data.system};
+        document.getElementById('expert-badge').classList.add('active');
+        document.getElementById('expert-name').textContent = data.name;
+        addMsg('🧠 Experto **' + data.name + '** activado. Ahora responderé como experto en este tema.', 'bot', true);
+        statusEl.textContent = 'Experto: ' + data.name;
+      } else {
+        addMsg('❌ No se encontró el experto: ' + name, 'bot', false);
+      }
+    })
+    .catch(function() {
+      addMsg('❌ Error al cargar el experto: ' + name, 'bot', false);
+    });
+  return true;
+}
+
+document.getElementById('expert-badge').onclick = function() {
+  activeExpert = null;
+  document.getElementById('expert-badge').classList.remove('active');
+  document.getElementById('expert-name').textContent = '';
+  statusEl.textContent = 'Experto desactivado';
+};
+
+var currentAbort=null;
+async function cancelSend(){
+  if(currentAbort){currentAbort.abort();currentAbort=null;}
+  sending=false;sendBtn.disabled=false;sendBtn.textContent='Enviar';
+  sendBtn.onclick=send;statusEl.textContent='Cancelado';
+}
+async function send(){
+  var text=inputEl.value.trim();
+  if((!text&&!fileAttaches.length)||sending)return;
+  // Detectar comando /experto
+  if(text.startsWith('/') && !fileAttaches.length) {
+    inputEl.value='';
+    checkExpertCommand(text);
+    return;
+  }
+  sending=true;sendBtn.disabled=false;sendBtn.textContent='Cancelar';sendBtn.onclick=cancelSend;inputEl.value='';
+  fileAttaches.forEach(function(f){addFileBubble(f);});
+  if(text)addMsg(text,'user',false);
+  var userContent=text||(fileAttaches.map(function(f){return f.name;}).join(', '));
+  var userDocs=fileAttaches.filter(function(f){return f.type!=='image';}).map(function(f){return f.name;});
+  var userImages=fileAttaches.filter(function(f){return f.type==='image';}).map(function(f){var parts=f.dataUrl.split(',');console.log('imagen b64 length:',parts[1]?parts[1].length:0);return parts[1]||'';}).filter(function(x){return x.length>0;});
+  chatHistory.push({role:'user',content:userContent,images:userImages.length>0?userImages:undefined,docs:userDocs.length>0?userDocs:undefined});
+  var tw=addMsg('Sparki está pensando...','bot',false);
+  tw.div.style.opacity='0.6';tw.div.style.fontStyle='italic';
+  var sys = activeExpert
+    ? activeExpert.system
+    : 'Eres Sparki, un asistente util. Responde SIEMPRE en espanol. Usa markdown: **negrita**, listas, codigo con backticks.';
+  if(fileContexts.length)fileContexts.forEach(function(f){sys+='\n\nArchivo '+f.name+':\n---\n'+f.text+'\n---';});
+  if(webEnabled&&isOnline){
+    statusEl.textContent='Buscando en la web...';
+    var wr=await webSearch(text);
+    if(wr)sys+='\n\nResultados web:\n---\n'+wr+'\n---';
+  }
+  var model=modelSelect.value;
+  if(!model){tw.wrap.remove();addMsg('No hay modelo seleccionado.','bot',false);sending=false;sendBtn.disabled=false;return;}
+  statusEl.textContent='Generando con '+model+'...';
+  try{
+    currentAbort=new AbortController();
+    // Construir mensajes con imágenes si las hay
+    var msgs=[{role:'system',content:sys}].concat(chatHistory.slice(-12));
+    // Añadir imágenes al último mensaje del usuario
+    // Las imágenes ya van en chatHistory, pasarlas a Ollama
+    msgs=msgs.map(function(m){
+      if(m.role==='user'&&m.images&&m.images.length>0){
+        return {role:'user',content:m.content,images:m.images};
+      }
+      return {role:m.role,content:m.content};
+    });
+    var res=await fetch('http://localhost:11434/v1/chat/completions',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:model,messages:msgs,stream:false}),signal:currentAbort?currentAbort.signal:null});
+    var data=await res.json();
+    var reply=data.choices[0].message.content;
+    chatHistory.push({role:'assistant',content:reply});
+    tw.wrap.remove();
+    addMsg(reply,'bot',true);
+    statusEl.textContent=webEnabled&&isOnline?'Con contexto web':'Listo';
+    fileAttaches=[];fileContexts=[];renderFileBar();attachBtn.classList.remove('active');
+    saveSession();
+  }catch(e){
+    tw.wrap.remove();
+    var msg='Error conectando con Ollama.';
+    if(e.message&&e.message.includes('subscription')){
+      msg='Error al conectar con el servidor. Comprueba que llama-server está corriendo.';
+    }
+    addMsg(msg,'bot',false);statusEl.textContent='Error';
+  }
+  sending=false;sendBtn.disabled=false;sendBtn.textContent='Enviar';sendBtn.onclick=send;inputEl.focus();
+}
+
+sendBtn.onclick=send;
+inputEl.addEventListener('keypress',function(e){if(e.key==='Enter')send();});
+
+fetch('http://localhost:11434/v1/models')
+  .then(function(r){return r.json();})
+  .then(function(data){
+    if(data.data&&data.data.length){
+      modelSelect.innerHTML='';
+      data.data.forEach(function(m){
+        var o=document.createElement('option');o.value=m.id;o.textContent=m.id;
+        modelSelect.appendChild(o);
+      });
+      statusEl.textContent='Conectado';
+    } else {
+      modelSelect.innerHTML='<option value="">Sin modelos</option>';
+      statusEl.textContent='Sin modelos';
+    }
+  })
+  .catch(function(){
+    modelSelect.innerHTML='<option value="">No disponible</option>';
+    statusEl.textContent='Servidor no disponible';
+  });
+
+renderHistory();
+if(allSessions.length>0){loadSession(allSessions[0].id);}else{newSession();}
+window.onerror=function(e,s,l,col,err){document.title="ERROR:"+e;};
+window.onerror=function(e,s,l,col,err){document.title="ERROR:"+e;};
+</script>
+</body>
+</html>
