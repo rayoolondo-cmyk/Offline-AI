@@ -61,7 +61,7 @@ tar xzf /tmp/python.tar.gz && mv python python-portable && rm /tmp/python.tar.gz
 
 ### 4. Instala librerías Python
 ```bash
-python-portable/bin/pip3 install PyPDF2 python-docx openpyxl python-pptx -q
+/run/media/ekaitz/offline-ai/python-portable/bin/pip3 install PyPDF2 python-docx openpyxl python-pptx -q
 ```
 
 > `PyPDF2` — leer PDFs | `python-docx` — Word | `openpyxl` — Excel | `python-pptx` — PowerPoint
